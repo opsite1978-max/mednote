@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedNotes — 醫學筆記平台</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: #2a3240;
+    --accent: #4ecdc4;
+    --accent2: #ff6b6b;
+    --gold: #ffd166;
+    --text: #e6edf3;
+    --text-muted: #7d8fa3;
+    --tag-bg: rgba(78,205,196,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === HEADER === */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-decoration: none;
+  }
+  .logo span { color: var(--gold); }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .btn {
+    padding: 0.45rem 1.1rem;
+    border-radius: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d1117;
+    font-weight: 500;
+  }
+  .btn-primary:hover { background: #5ee0d7; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* === LAYOUT === */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    flex: 1;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* === SIDEBAR === */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
+
+  .sidebar-section {
+    margin-bottom: 2rem;
+  }
+
+  .sidebar-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+  .sidebar-item:hover, .sidebar-item.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .sidebar-item.active { color: var(--accent); }
+  .sidebar-item .icon { font-size: 1rem; }
+  .sidebar-item .count {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    background: var(--surface2);
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: var(--text-muted);
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0 0.25rem;
+  }
+  .tag-chip {
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid rgba(78,205,196,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .tag-chip:hover { background: rgba(78,205,196,0.25); }
+
+  /* === MAIN === */
+  main {
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+  }
+
+  .main-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.85rem;
+    width: 260px;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus-within { border-color: var(--accent); }
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 0.875rem;
+    width: 100%;
+    font-family: 'Noto Serif TC', serif;
+  }
+  .search-bar input::placeholder { color: var(--text-muted); }
+
+  /* === NOTES GRID === */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    animation: fadeInUp 0.4s ease both;
+  }
+  .note-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(78,205,196,0.4);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+
+  .note-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .note-img-placeholder {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, var(--surface2) 0%, #1a2233 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .note-body { padding: 1rem 1.1rem; }
+
+  .note-category {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .note-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .note-excerpt {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1.1rem;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .note-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .note-tag {
+    background: var(--tag-bg);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+  }
+
+  /* === MODAL === */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .close-btn:hover { color: var(--accent2); }
+
+  .modal-body { padding: 1.5rem; }
+
+  /* === FORM === */
+  .form-group { margin-bottom: 1.25rem; }
+  .form-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.9rem;
+    padding: 0.65rem 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea {
+    min-height: 160px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+  .form-select option { background: var(--surface2); }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(78,205,196,0.05);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .upload-text { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
+  .upload-text strong { color: var(--accent); }
+
+  .upload-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .preview-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255,107,107,0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tag input */
+  .tag-input-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    min-height: 42px;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-item {
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid rgba(78,205,196,0.25);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .tag-item button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 0;
+  }
+  .tag-item button:hover { color: var(--accent2); }
+  .tag-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 0.85rem;
+    min-width: 80px;
+    flex: 1;
+    font-family: 'Noto Serif TC', serif;
+  }
+
+  /* View modal */
+  .view-modal-img {
+    width: 100%;
+    max-height: 350px;
+    object-fit: contain;
+    background: var(--surface2);
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .view-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .view-images-grid img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .view-images-grid img:hover { transform: scale(1.03); }
+
+  .view-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .view-category-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    background: rgba(78,205,196,0.15);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .view-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .view-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.35;
+  }
+  .view-content {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: #c9d5e0;
+    white-space: pre-wrap;
+  }
+  .view-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 1.25rem; }
+  .view-tag {
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid rgba(78,205,196,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1.25rem;
+  }
+
+  .btn-danger {
+    background: rgba(255,107,107,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,107,107,0.3);
+    padding: 0.45rem 1.1rem;
+    border-radius: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { background: rgba(255,107,107,0.3); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-style: italic; margin-bottom: 0.5rem; color: var(--text); opacity: 0.6; }
+  .empty-state p { font-size: 0.85rem; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .stat-chip strong { color: var(--gold); }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    .search-bar { width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">Med<span>Notes</span></a>
+  <div class="header-actions">
+    <button class="btn btn-ghost" id="filterBtn">🔖 篩選</button>
+    <button class="btn btn-primary" id="newNoteBtn">＋ 新增筆記</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+    <div class="sidebar-section">
+      <div class="sidebar-label">瀏覽</div>
+      <div class="sidebar-item active" data-filter="all">
+        <span class="icon">📋</span> 全部筆記
+        <span class="count" id="countAll">0</span>
+      </div>
+      <div class="sidebar-item" data-filter="has-image">
+        <span class="icon">🔬</span> 含有圖片
+        <span class="count" id="countImg">0</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">科別</div>
+      <div id="categoryList"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">標籤</div>
+      <div class="tag-cloud" id="tagCloud"></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="main-header">
+      <h1 class="main-title">我的醫學筆記</h1>
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="搜尋筆記…">
+      </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="notes-grid" id="notesGrid"></div>
+  </main>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="editModalTitle">新增筆記</h2>
+      <button class="close-btn" id="closeEditModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">筆記標題 *</label>
+          <input class="form-input" id="noteTitle" type="text" placeholder="例：心肌梗塞的心電圖表現">
+        </div>
+        <div class="form-group">
+          <label class="form-label">科別</label>
+          <select class="form-select" id="noteCategory">
+            <option value="內科">內科</option>
+            <option value="外科">外科</option>
+            <option value="心臟科">心臟科</option>
+            <option value="神經科">神經科</option>
+            <option value="骨科">骨科</option>
+            <option value="婦產科">婦產科</option>
+            <option value="兒科">兒科</option>
+            <option value="急診醫學">急診醫學</option>
+            <option value="病理科">病理科</option>
+            <option value="放射科">放射科</option>
+            <option value="皮膚科">皮膚科</option>
+            <option value="眼科">眼科</option>
+            <option value="耳鼻喉科">耳鼻喉科</option>
+            <option value="藥理學">藥理學</option>
+            <option value="解剖學">解剖學</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">筆記內容</label>
+        <textarea class="form-textarea" id="noteContent" placeholder="在此輸入你的醫學筆記、觀察、診斷重點…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">上傳醫學圖片</label>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="imageUpload" accept="image/*" multiple>
+          <div class="upload-icon">🩻</div>
+          <div class="upload-text">
+            <strong>點擊選擇圖片</strong>或拖曳至此<br>
+            支援 X光、CT、MRI、病理切片等醫學影像<br>
+            <small>JPG, PNG, WEBP</small>
+          </div>
+        </div>
+        <div class="upload-preview" id="uploadPreview"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">標籤（按 Enter 新增）</label>
+        <div class="tag-input-wrap" id="tagInputWrap">
+          <input class="tag-input" id="tagInput" type="text" placeholder="新增標籤…">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="cancelEdit">取消</button>
+        <button class="btn btn-primary" id="saveNote">儲存筆記</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>筆記詳細</h2>
+      <button class="close-btn" id="closeViewModal">×</button>
+    </div>
+    <div class="modal-body" id="viewModalBody"></div>
+  </div>
+</div>
+
+<script>
+// ========== STATE ==========
+let notes = JSON.parse(localStorage.getItem('mednotes') || '[]');
+let currentFilter = 'all';
+let currentSearch = '';
+let editingId = null;
+let pendingImages = []; // {name, dataURL}
+
+const save = () => localStorage.setItem('mednotes', JSON.stringify(notes));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+// ========== SAMPLE DATA ==========
+if (notes.length === 0) {
+  notes = [
+    {
+      id: uid(), title: 'ST段抬高型心肌梗塞（STEMI）診斷重點',
+      category: '心臟科',
+      content: '• 心電圖：ST段抬高 ≥1mm（肢導）或 ≥2mm（胸導）\n• 典型症狀：胸痛、左肩/下頷放射痛、冷汗、噁心\n• 心肌酶：Troponin I/T 升高，CK-MB 升高\n• 治療黃金時間：症狀發作後90分鐘內行PCI\n• Killip classification 評估心臟功能',
+      tags: ['心電圖', 'STEMI', 'PCI', '心肌酶'],
+      images: [],
+      date: new Date(Date.now()-86400000*2).toISOString()
+    },
+    {
+      id: uid(), title: '腦中風快速評估 — FAST原則',
+      category: '神經科',
+      content: 'F — Face: 臉部不對稱，要求微笑\nA — Arm: 手臂無力，雙手平舉10秒\nS — Speech: 言語不清，重複說一句話\nT — Time: 立即撥打119\n\n影像學：\n• CT平掃：排除腦出血\n• MRI DWI：早期缺血性梗塞（6h內）\n\n靜脈rtPA溶栓：發作4.5小時內，無禁忌症',
+      tags: ['中風', 'FAST', 'rtPA', '神經學'],
+      images: [],
+      date: new Date(Date.now()-86400000*5).toISOString()
+    }
+  ];
+  save();
+}
+
+// ========== RENDER ==========
+function getFiltered() {
+  return notes.filter(n => {
+    if (currentFilter === 'has-image') return n.images && n.images.length > 0;
+    if (currentFilter !== 'all' && currentFilter !== 'has-image') return n.category === currentFilter;
+    return true;
+  }).filter(n => {
+    if (!currentSearch) return true;
+    const q = currentSearch.toLowerCase();
+    return n.title.toLowerCase().includes(q) ||
+           n.content.toLowerCase().includes(q) ||
+           (n.tags || []).some(t => t.toLowerCase().includes(q));
+  });
+}
+
+function renderNotes() {
+  const grid = document.getElementById('notesGrid');
+  const filtered = getFiltered();
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">🗂️</div>
+      <h3>尚無筆記</h3>
+      <p>點擊右上角「新增筆記」開始記錄</p>
+    </div>`;
+    return;
+  }
+
+  filtered.forEach((n, i) => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.style.animationDelay = `${i * 0.06}s`;
+
+    let imgHTML = '';
+    if (n.images && n.images.length > 0) {
+      imgHTML = `<img class="note-img" src="${n.images[0]}" alt="醫學影像">`;
+    } else {
+      const icons = {'心臟科':'🫀','神經科':'🧠','骨科':'🦴','病理科':'🔬','放射科':'🩻','急診醫學':'🚑','內科':'🩺','外科':'🔪','婦產科':'👶','兒科':'🧒','藥理學':'💊','解剖學':'🫁'};
+      const icon = icons[n.category] || '📄';
+      imgHTML = `<div class="note-img-placeholder">${icon}</div>`;
+    }
+
+    const excerpt = n.content.replace(/[•\n]/g, ' ').slice(0, 120) + (n.content.length > 120 ? '…' : '');
+    const date = new Date(n.date).toLocaleDateString('zh-TW', {year:'numeric',month:'short',day:'numeric'});
+    const tags = (n.tags||[]).slice(0,3).map(t=>`<span class="note-tag">${t}</span>`).join('');
+
+    card.innerHTML = `
+      ${imgHTML}
+      <div class="note-body">
+        <div class="note-category">${n.category}</div>
+        <div class="note-title">${n.title}</div>
+        <div class="note-excerpt">${excerpt || '（無內容）'}</div>
+      </div>
+      <div class="note-footer">
+        <div class="note-tags">${tags}</div>
+        <span>${date}</span>
+      </div>
+    `;
+    card.addEventListener('click', () => openView(n.id));
+    grid.appendChild(card);
+  });
+
+  renderSidebar();
+  renderStats();
+}
+
+function renderSidebar() {
+  // Category list
+  const cats = {};
+  notes.forEach(n => { cats[n.category] = (cats[n.category]||0)+1; });
+  const catList = document.getElementById('categoryList');
+  catList.innerHTML = Object.entries(cats).map(([c,count])=>`
+    <div class="sidebar-item${currentFilter===c?' active':''}" data-filter="${c}">
+      <span class="icon">${getCatIcon(c)}</span> ${c}
+      <span class="count">${count}</span>
+    </div>`).join('');
+
+  catList.querySelectorAll('.sidebar-item').forEach(el => {
+    el.addEventListener('click', () => {
+      currentFilter = el.dataset.filter;
+      document.querySelectorAll('.sidebar-item').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      renderNotes();
+    });
+  });
+
+  // All count
+  document.getElementById('countAll').textContent = notes.length;
+  document.getElementById('countImg').textContent = notes.filter(n=>n.images&&n.images.length>0).length;
+
+  // Tag cloud
+  const tags = {};
+  notes.forEach(n=>(n.tags||[]).forEach(t=>{ tags[t]=(tags[t]||0)+1; }));
+  document.getElementById('tagCloud').innerHTML = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([t])=>`<span class="tag-chip">${t}</span>`).join('');
+}
+
+function renderStats() {
+  const filtered = getFiltered();
+  const bar = document.getElementById('statsBar');
+  const withImg = filtered.filter(n=>n.images&&n.images.length>0).length;
+  const cats = [...new Set(filtered.map(n=>n.category))].length;
+  bar.innerHTML = `
+    <div class="stat-chip">共 <strong>${filtered.length}</strong> 篇筆記</div>
+    <div class="stat-chip">含圖片 <strong>${withImg}</strong> 篇</div>
+    <div class="stat-chip"><strong>${cats}</strong> 個科別</div>
+  `;
+}
+
+function getCatIcon(c) {
+  const m={'心臟科':'🫀','神經科':'🧠','骨科':'🦴','病理科':'🔬','放射科':'🩻','急診醫學':'🚑','內科':'🩺','外科':'✂️','婦產科':'👶','兒科':'🧒','藥理學':'💊','解剖學':'🫁','皮膚科':'🩹','眼科':'👁️','耳鼻喉科':'👂'};
+  return m[c]||'📋';
+}
+
+// ========== EDIT MODAL ==========
+let tagList = [];
+
+function openCreate() {
+  editingId = null;
+  tagList = [];
+  pendingImages = [];
+  document.getElementById('editModalTitle').textContent = '新增筆記';
+  document.getElementById('noteTitle').value = '';
+  document.getElementById('noteContent').value = '';
+  document.getElementById('noteCategory').value = '內科';
+  document.getElementById('uploadPreview').innerHTML = '';
+  renderTagInputTags();
+  openModal('editModal');
+}
+
+function openEdit(id) {
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  editingId = id;
+  tagList = [...(n.tags||[])];
+  pendingImages = (n.images||[]).map((d,i)=>({name:`img${i}`,dataURL:d}));
+  document.getElementById('editModalTitle').textContent = '編輯筆記';
+  document.getElementById('noteTitle').value = n.title;
+  document.getElementById('noteContent').value = n.content;
+  document.getElementById('noteCategory').value = n.category;
+  renderTagInputTags();
+  renderPendingImages();
+  openModal('editModal');
+}
+
+function renderTagInputTags() {
+  const wrap = document.getElementById('tagInputWrap');
+  const input = document.getElementById('tagInput');
+  wrap.querySelectorAll('.tag-item').forEach(el=>el.remove());
+  tagList.forEach(t=>{
+    const el = document.createElement('div');
+    el.className = 'tag-item';
+    el.innerHTML = `${t}<button onclick="removeTag('${t}')">×</button>`;
+    wrap.insertBefore(el, input);
+  });
+}
+
+window.removeTag = (t) => {
+  tagList = tagList.filter(x=>x!==t);
+  renderTagInputTags();
+};
+
+document.getElementById('tagInput').addEventListener('keydown', e=>{
+  if (e.key==='Enter'||e.key===',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/,/g,'');
+    if (val && !tagList.includes(val)) {
+      tagList.push(val);
+      renderTagInputTags();
+    }
+    e.target.value = '';
+  }
+});
+
+// Image upload
+const uploadZone = document.getElementById('uploadZone');
+const imageUpload = document.getElementById('imageUpload');
+
+uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', ()=>uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e=>{
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+imageUpload.addEventListener('change', e=>handleFiles(e.target.files));
+
+function handleFiles(files) {
+  Array.from(files).forEach(f=>{
+    if (!f.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      pendingImages.push({name:f.name, dataURL:ev.target.result});
+      renderPendingImages();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderPendingImages() {
+  const prev = document.getElementById('uploadPreview');
+  prev.innerHTML = pendingImages.map((img,i)=>`
+    <div class="preview-item">
+      <img src="${img.dataURL}" alt="${img.name}">
+      <button class="preview-remove" onclick="removePendingImg(${i})">×</button>
+    </div>`).join('');
+}
+
+window.removePendingImg = (i) => {
+  pendingImages.splice(i,1);
+  renderPendingImages();
+};
+
+document.getElementById('saveNote').addEventListener('click', ()=>{
+  const title = document.getElementById('noteTitle').value.trim();
+  if (!title) { alert('請輸入筆記標題'); return; }
+
+  const noteData = {
+    id: editingId || uid(),
+    title,
+    category: document.getElementById('noteCategory').value,
+    content: document.getElementById('noteContent').value,
+    tags: [...tagList],
+    images: pendingImages.map(i=>i.dataURL),
+    date: editingId ? (notes.find(n=>n.id===editingId)||{}).date || new Date().toISOString() : new Date().toISOString()
+  };
+
+  if (editingId) {
+    const idx = notes.findIndex(n=>n.id===editingId);
+    notes[idx] = noteData;
+  } else {
+    notes.unshift(noteData);
+  }
+  save();
+  closeModal('editModal');
+  renderNotes();
+});
+
+// ========== VIEW MODAL ==========
+function openView(id) {
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  const date = new Date(n.date).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const tags = (n.tags||[]).map(t=>`<span class="view-tag">${t}</span>`).join('');
+  const imgsHTML = n.images&&n.images.length>0
+    ? `<div class="view-images-grid">${n.images.map(src=>`<img src="${src}" alt="" onclick="openLightbox('${src}')">`).join('')}</div>`
+    : '';
+
+  document.getElementById('viewModalBody').innerHTML = `
+    ${imgsHTML}
+    <div class="view-meta">
+      <span class="view-category-badge">${getCatIcon(n.category)} ${n.category}</span>
+      <span class="view-date">${date}</span>
+    </div>
+    <div class="view-title">${n.title}</div>
+    <div class="view-content">${n.content || '（無內容）'}</div>
+    ${tags ? `<div class="view-tags">${tags}</div>` : ''}
+    <div class="modal-actions">
+      <button class="btn-danger" onclick="deleteNote('${n.id}')">🗑 刪除</button>
+      <button class="btn btn-ghost" onclick="closeModal('viewModal')">關閉</button>
+      <button class="btn btn-primary" onclick="editFromView('${n.id}')">✏️ 編輯</button>
+    </div>
+  `;
+  openModal('viewModal');
+}
+
+window.editFromView = (id) => {
+  closeModal('viewModal');
+  setTimeout(()=>openEdit(id), 200);
+};
+
+window.deleteNote = (id) => {
+  if (!confirm('確定要刪除這篇筆記嗎？')) return;
+  notes = notes.filter(n=>n.id!==id);
+  save();
+  closeModal('viewModal');
+  renderNotes();
+};
+
+window.openLightbox = (src) => {
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  lb.innerHTML = `<img src="${src}" alt="醫學影像">`;
+  lb.addEventListener('click', ()=>lb.remove());
+  document.body.appendChild(lb);
+};
+
+// ========== MODAL UTILS ==========
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.getElementById('newNoteBtn').addEventListener('click', openCreate);
+document.getElementById('closeEditModal').addEventListener('click', ()=>closeModal('editModal'));
+document.getElementById('cancelEdit').addEventListener('click', ()=>closeModal('editModal'));
+document.getElementById('closeViewModal').addEventListener('click', ()=>closeModal('viewModal'));
+
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) closeModal(el.id); });
+});
+
+// Sidebar filter
+document.querySelectorAll('.sidebar-item[data-filter]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    currentFilter = el.dataset.filter;
+    document.querySelectorAll('.sidebar-item').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    renderNotes();
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', e=>{
+  currentSearch = e.target.value;
+  renderNotes();
+});
+
+// ========== INIT ==========
+renderNotes();
+</script>
+</body>
+</html>
